@@ -1,38 +1,41 @@
 const fs = require('fs');
 const path = require('path');
-
-
 let query = process.argv.slice(2);
+
+let fileType = {
+    "images": ["png", "jpg", "jpeg", "gif", "bmp", "tiff", "svg", "ico", "webp", "heic"],
+    "media": ["mp4", "mov", "avi", "mkv", "wmv", "flv", "mpg", "mpeg", "webm", "3gp"],
+    "documents": ["pdf", "docx", "xlsx", "pptx", "txt", "csv", "rtf", "odt", "ods", "odp", "doc", "xls", "ppt", "html", "xml", "json", "epub", "md", "pages", "numbers", "key"],
+    "apk": ["apk", "aab", "xapk", "ipa", "app", "exe", "msi", "dmg", "deb", "rpm"],
+    "compressed": ["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "z", "iso"],
+    "scripts": ["js"],
+    "music": ["mp3", "wav", "flac", "aac", "ogg", "wma", "m4a", "alac", "aiff", "mid"]
+}
+const f = (ext) => {
+    for (type in fileType) {
+        if (fileType[type].includes(ext)) return type;
+    }
+    return "other"
+}
+
+const createFolders = (dir) => {
+    fs.mkdirSync(path.join(dir, 'organized'));
+    fs.mkdirSync(path.join(dir, 'organized', 'images'));
+    fs.mkdirSync(path.join(dir, 'organized', 'documents'));
+    fs.mkdirSync(path.join(dir, 'organized', 'media'));
+    fs.mkdirSync(path.join(dir, 'organized', 'apk'));
+    fs.mkdirSync(path.join(dir, 'organized', 'compressed'));
+    fs.mkdirSync(path.join(dir, 'organized', 'scripts'));
+    fs.mkdirSync(path.join(dir, 'organized', 'music'));
+    fs.mkdirSync(path.join(dir, 'organized', 'other'));
+}
 
 
 const Organizer = (dir) => {
     if (!fs.existsSync(dir)) return console.log("no Path exist");
     let data = fs.readdirSync(dir);
-    let fileType = {
-        "images": ["png", "jpg", "jpeg", "gif", "bmp", "tiff", "svg", "ico", "webp", "heic"],
-        "media": ["mp4", "mov", "avi", "mkv", "wmv", "flv", "mpg", "mpeg", "webm", "3gp"],
-        "documents": ["pdf", "docx", "xlsx", "pptx", "txt", "csv", "rtf", "odt", "ods", "odp", "doc", "xls", "ppt", "html", "xml", "json", "epub", "md", "pages", "numbers", "key"],
-        "apk": ["apk", "aab", "xapk", "ipa", "app", "exe", "msi", "dmg", "deb", "rpm"],
-        "compressed": ["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "z", "iso"],
-        "scripts": ["js"],
-        "music": ["mp3", "wav", "flac", "aac", "ogg", "wma", "m4a", "alac", "aiff", "mid"]
-    }
-    const f = (ext) => {
-        for (type in fileType) {
-            if (fileType[type].includes(ext)) return type;
-        }
-        return "other"
-    }
     if (!fs.existsSync(path.join(dir, 'organized'))) {
-        fs.mkdirSync(path.join(dir, 'organized'));
-        fs.mkdirSync(path.join(dir, 'organized', 'images'));
-        fs.mkdirSync(path.join(dir, 'organized', 'documents'));
-        fs.mkdirSync(path.join(dir, 'organized', 'media'));
-        fs.mkdirSync(path.join(dir, 'organized', 'apk'));
-        fs.mkdirSync(path.join(dir, 'organized', 'compressed'));
-        fs.mkdirSync(path.join(dir, 'organized', 'scripts'));
-        fs.mkdirSync(path.join(dir, 'organized', 'music'));
-        fs.mkdirSync(path.join(dir, 'organized', 'other'));
+        createFolders(dir);
         data.forEach(file => {
             if (fs.lstatSync(path.resolve(dir, file)).isFile()) {
                 let spath = path.resolve(dir, file);
@@ -44,8 +47,27 @@ const Organizer = (dir) => {
     }
 }
 
+const organizeHelper = (dir, organizeDir) => {
+    if (fs.lstatSync(dir).isFile()) {
+        let fileExt = path.extname(dir).slice(1);
+        let ftype = f(fileExt);
+        fs.copyFileSync(dir, path.resolve(organizeDir, ftype, path.basename(dir)));
+        return;
+    }
+    if (path.basename(dir) != 'organized') {
+        let subDir = fs.readdirSync(dir);
+        subDir.forEach(ele => {
+            let eleDir = path.resolve(dir, ele);
+            organizeHelper(eleDir, organizeDir);
+        })
+    }
+}
+
 const deepOrganiser = (dir) => {
-    console.log("this option is under work");
+    if (!fs.existsSync(path.join(dir, 'organized'))) {
+        createFolders(dir);
+        organizeHelper(dir, path.resolve(dir, 'organized'));
+    }
 }
 const makeTree = (space, dir) => {
     if (fs.lstatSync(dir).isFile()) {
@@ -90,13 +112,11 @@ else if (query[0] == "tree") {
     else console.log("Run for help");
 }
 
-
-else if (query[0] == "OrganizeDeepPath") {
-    console.log("Under Process");
-}
 else if (query[0] == 'help') {
-    console.log("For organize working folder run 'node index.js organizeMe only")
-    console.log("For organize any folder run 'node index.js organizePath only pathofFolder")
+    console.log("For organize working folder only run 'node index.js organizeMe only")
+    console.log("For organize working folder and all its sub directries run 'node index.js organizeMe deep")
+    console.log("For organize any folder only run 'node index.js organizePath only pathofFolder")
+    console.log("For organize any folder and all its sub directries run 'node index.js organizePath deep pathofFolder")
     console.log("For tree of working folder run 'node index.js tree me")
     console.log("For tree of any folder run 'node index.js tree path pathofFolder")
 }
