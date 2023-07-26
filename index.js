@@ -18,6 +18,18 @@ const f = (ext) => {
     return "other"
 }
 
+const pathProcesser = () => {
+    let path = "";
+    for (let i = 2; i < query.length; i++) {
+        if (path != '')
+            path = path + " " + query[i];
+        else {
+            path = query[i];
+        }
+    }
+    return path;
+}
+
 const createFolders = (dir) => {
     fs.mkdirSync(path.join(dir, 'organized'));
     fs.mkdirSync(path.join(dir, 'organized', 'images'));
@@ -91,7 +103,7 @@ if (query[0] == "organizeMe") {
     else console.log("Run for help");
 }
 else if (query[0] == "organizePath") {
-    let dir = query[2];
+    let dir = pathProcesser();
     if (query[1] == "only")
         Organizer(dir);
     else if (query[1] == "deep")
@@ -103,7 +115,7 @@ else if (query[0] == "tree") {
         makeTree(" ", path.resolve());
     else if (query[1] == "path") {
         if (query[2] != "") {
-            let dir = query[2];
+            let dir = pathProcesser();
             if (!fs.existsSync(dir)) return console.log("no Path exist");
             makeTree("  ", dir);
         }
